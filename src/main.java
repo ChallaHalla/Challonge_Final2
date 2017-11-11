@@ -3,7 +3,6 @@ import com.fasterxml.*;
 
 import java.util.Arrays;
 
-
 import model.TournamentType;
 
 import java.io.*;
@@ -57,7 +56,7 @@ public class main implements Serializable {
 				// creating new set block
 			
 			if (menu_nav == 1) {
-				player temp = new player("temp");
+				
 				Set set = new bo3();
 				Game game; // new game temp to set values in bo5 or bo3
 				String tag; // tag is tep var to store player tags in each
@@ -69,13 +68,14 @@ public class main implements Serializable {
 				System.out.println("Enter p1 tag");
 
 				tag = input.next();
-				player p1 = temp;
+				player p1 = new player(tag);
 				
 				playerFileCreation(tag,p1);
 
 				System.out.println("Enter p2 tag");
+				
 				tag = input.next();
-				player p2 = temp;
+				player p2 = new player(tag);
 				playerFileCreation(tag,p2);
 				
 				ObjectOutputStream oosp1 = new ObjectOutputStream(new FileOutputStream(new File(p1.getTag()+".txt")));
@@ -87,47 +87,41 @@ public class main implements Serializable {
 				
 				if (set_type == 1) { // b03
 					set = new bo3();
-					set.addGame(0, p1, p2);
-					set.addGame(1, p1, p2);
+					
 					
 				} else if (set_type == 2) { // b05
 					set = new bo5();
-					set.addGame(0, p1, p2);
-					set.addGame(1, p1, p2);
-					set.addGame(2, p1, p2);
+					
 					
 				}
 				
 				
 				//iterating thru games
+				ArrayList<Integer> bannedStages = new ArrayList<Integer>();
 				for (int i = 0; i < set.length(); i++) {
-					System.out.println(set.length());
-
-					if (i == 0) {// specific bans for game 1
+					if (i == 0) {
+						// specific bans for game 1
 						System.out.println("Who bans first?");
 						System.out.println("1) " + p1.getTag());
 						System.out.println("2) " + p2.getTag());
 						int p_ban = input.nextInt();
-						int stage_ban_index;
-						ArrayList<Integer> bannedStages = new ArrayList<Integer>();
+						bannedStages.add(5);
 						if (p_ban == 1) {
-							bans(p1,p2,bannedStages,input);
-							
+							stage_int = bans(p1,p2,bannedStages,i,input);
 						} 
 						else if (p_ban == 2) {
-							bans(p2,p1,bannedStages,input);
+							stage_int = bans(p2,p1,bannedStages,i,input);
 						}
+						System.out.println("Chose stage is " + stage_int);
+						
 						System.out.println("Who won game 1 ?");
 						System.out.println("1) " + p1.getTag() );
 						System.out.println("2) " + p2.getTag() );
 						int winner = input.nextInt();
-						if (winner == 1) {// setting winner of first game in set
-											// to
-											// p1
+						if (winner == 1) {
 							set.addGame(0, stage_int, p1, p2);
-						} else if (winner == 2) {// setting winner of first game
-													// in
-													// set to p1
+						} 
+						else if (winner == 2) {
 							set.addGame(0, stage_int, p2, p1);
 						}
 					}
@@ -135,8 +129,38 @@ public class main implements Serializable {
 					// not game 1
 
 					else { // anything not game 1
+						if(set.getWinner() != null){
+							break;
+						}
+						bannedStages.removeAll(bannedStages);
+						set.getStages(bannedStages);
+						for(int j=0; j<bannedStages.size(); j++){
+							System.out.println(bannedStages.get(j));
+						}
 						
-						
+						System.out.println(set.getGame(i-1).getWinner().getTag() + " won last game");
+						if(p1 == set.getGame(i-1).getWinner()){
+							bans(p1, p2, bannedStages,i, input);
+							System.out.println("what stage does " + p2.getTag() + " choose?");
+							stagelist(bannedStages);
+							stage_int = input.nextInt(); // selection what stage to play on done
+							
+						}
+						else{
+							bans(p2, p1, bannedStages,i, input);
+							System.out.println("what stage does " + p1.getTag() + " choose?");
+							stagelist(bannedStages);
+							stage_int = input.nextInt(); // selection what stage to play on done
+						}
+						System.out.println("Who won game " + (i+1) +" ?");
+						System.out.println("1) " + p1.getTag() );
+						System.out.println("2) " + p2.getTag() );
+						int winner = input.nextInt();
+						if (winner == 1) {
+							set.addGame(i, stage_int, p1, p2);
+						} else if (winner == 2) {
+							set.addGame(i, stage_int, p2, p1);
+						}
 						
 						} // end of checking if bo3 or not
 
@@ -145,12 +169,16 @@ public class main implements Serializable {
 						
 
 					} // end of else
-				 // end of for loop adding bans to array, setting stages for
-					// games, and assigning winners to each game.
-				//tallying up games
+				System.out.println("Congratulations to " + set.getWinner().getTag());
+				//now store update player objs in files
+				playertoJson(p1);
+				playertoJson(p2);
+				
+				//now store set library as a file
+				setlibrary.addSet(set);
+				
 			
-				
-				
+				//work on making sure inputs can be tred and caught if they are invalid
 			} // end of set creating block
 
 			else if (menu_nav == 2) { //will finish later
@@ -243,58 +271,60 @@ public class main implements Serializable {
 		System.out.println("5 Exit");
 	}
 	
-	public static void bans(player first_ban, player second_ban, ArrayList<Integer> bannedStages, Scanner input) {
+	public static int bans(player first_ban, player second_ban, ArrayList<Integer> bannedStages, int game_num, Scanner input) {
 		int stage_ban_index;
-		System.out.println("What stage does " + first_ban.getTag() + " ban first?");
-		stage_ban_index = input.nextInt();
-		first_ban.add_ban(stage_ban_index);
-		bannedStages.add(stage_ban_index);
-		System.out.println("What stage does " + second_ban.getTag() + " ban first?");
-		stage_ban_index = input.nextInt();
-		second_ban.add_ban(stage_ban_index);
-		bannedStages.add(stage_ban_index);
-		System.out.println("What stage does " + second_ban.getTag() + " ban second?");
-		second_ban.add_ban(stage_ban_index);
-		bannedStages.add(stage_ban_index);
-		System.out.println("What stage does " + first_ban.getTag() + " ban last?");
-		stage_ban_index = input.nextInt();
-		first_ban.add_ban(stage_ban_index);
-		bannedStages.add(stage_ban_index);
+		if(game_num==0){
+			System.out.println("What stage does " + first_ban.getTag() + " ban first?");
+			stagelist(bannedStages);
+			stage_ban_index = input.nextInt();
+			first_ban.add_ban(stage_ban_index);
+			bannedStages.add(stage_ban_index);
+			System.out.println("What stage does " + second_ban.getTag() + " ban first?");
+			stagelist(bannedStages);
+			stage_ban_index = input.nextInt();
+			second_ban.add_ban(stage_ban_index);
+			bannedStages.add(stage_ban_index);
+			System.out.println("What stage does " + second_ban.getTag() + " ban second?");
+			stagelist(bannedStages);
+			stage_ban_index = input.nextInt();
+			second_ban.add_ban(stage_ban_index);
+			bannedStages.add(stage_ban_index);
+			System.out.println("What stage does " + first_ban.getTag() + " ban last?");
+			stagelist(bannedStages);
+			stage_ban_index = input.nextInt();
+			first_ban.add_ban(stage_ban_index);
+			bannedStages.add(stage_ban_index);
+			
+			for(int i=0; i<bannedStages.size(); i++){
+				if(!bannedStages.contains(i)){
+					return i;
+				}
+				
+			}
+		}
+		else{
+			System.out.println("What stage does " + first_ban.getTag() + " ban?");
+			stagelist(bannedStages);
+			stage_ban_index = input.nextInt();
+			first_ban.add_ban(stage_ban_index);
+			bannedStages.add(stage_ban_index);
+			
+		}
+		return -1;
 	}
 
-	public static void stagelist() {
+	public static void stagelist(ArrayList<Integer> banned_stages) {
 		String[] Stages = { "Battlefield", "Yoshi's Story", "Final Destination", "Fountain of Dreams", "Dream Land",
 				"Pokemon Stadium" };
 		for (int i = 0; i < Stages.length; i++) {
-			System.out.println((i + 1) + ") " + Stages[i]);
+			if(banned_stages.contains(i) == false){
+				System.out.println(i+") "+ Stages[i]);
+			}
 		}
 	}
 	
 	
-	public static int[] returnstage(int last_win_stage, int banned_stage) {
-		int[] stages = { 1, 2, 3, 4, 5, 6 };
-		for (int i = 0; i < 6; i++) {
-			if (last_win_stage == stages[i]) {
-				stages[i] = 0;
-			}
-			if (banned_stage == stages[i]) {
-				stages[i] = 0;
-			}
-		}
-
-		int[] new_stages = new int[4];
-		int counter = 0;
-		while (counter < 4) {
-			for (int i = 0; i < 6; i++) {
-				if (stages[i] != 0) {
-					System.out.println(counter);
-					new_stages[counter] = stages[i];
-					counter += 1;
-				}
-			}
-		}
-		return new_stages;
-	}
+	
 	
 	public static void playertoJson(player p) throws JsonGenerationException, JsonMappingException, IOException{
 
@@ -327,5 +357,4 @@ public class main implements Serializable {
 
 	// expand stage list to exclude PS on game 1
 	// allow method to take in banned stages and not print them
-
 }
