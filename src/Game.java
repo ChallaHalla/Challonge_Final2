@@ -17,16 +17,7 @@ public class Game implements Serializable{
 		this.winner=winner;
 		this.loser=loser;
 	}
-Game(int game_number, player winner, player loser){
-		
-		this.game_number=game_number;
-		this.stage=stage;
-		this.winner=winner;
-		this.loser=loser;
-	}
-	
-	
-	//stage enum
+
 	
 	
 	//getters
