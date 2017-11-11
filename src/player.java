@@ -5,7 +5,7 @@ public class player implements Serializable{
 
 	private String tag;
 	public int game_wins;
-	private ArrayList<String> banned_stages = new ArrayList<String>();
+	private ArrayList<Integer> banned_stages = new ArrayList<Integer>();
 	private ArrayList<Set> set_wins = new ArrayList<Set>();
 	private ArrayList<Set> set_losses = new ArrayList<Set>();
 
@@ -37,8 +37,8 @@ public class player implements Serializable{
 		this.set_losses.add(set);
 	}
 	
-	public void add_ban(String stage){
-		this.banned_stages.add(stage);
+	public void add_ban(int i){
+		this.banned_stages.add(i);
 	}
 	
 	
